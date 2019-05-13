@@ -1,2 +1,1 @@
-# RPG-CYOA-Template
-Template for RPG CYOA
+# Web-CYOA-Airtable
