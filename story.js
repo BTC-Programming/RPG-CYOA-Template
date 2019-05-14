@@ -4,13 +4,14 @@ window.onload = start;
 
 // Replace with your own AirTable API key.
 // Normally, you will want to keep this private.
-const key = 'keyCTEV1rBtpMeDDa'; // mine
-const app_id = 'appK20CRKWRVV1mYc'; // mine
+const key = 'keywDn60rw1pPyqvh';
+const app_id = 'appSVsEDQXy942uBt';
 const base_url = `https://api.airtable.com/v0/${app_id}`;
 
 // Change this to match ID in your AirTable.
-const STORY_INTRO_ID = 'recYlGco11TCMd4ba'; // Start Game Scene
-const CHARACTER_SELECT_ID = 'recQBB2ni4XFJtEvL' // Character Select Scene
+const STORY_INTRO_ID = 'rechdafIRcc9kLvlR';
+const CHARACTER_SELECT_ID = 'recas7gQgQOT7xdkm'
+const OPENING_SCENE_ID = 'recas7gQgQOT7xdkm';
 
 // Start story and make initial DB requests for opening scene, saved games,
 // and available characters.
@@ -23,7 +24,7 @@ function start() {
       type: 'GET'
     }),
     $.ajax({
-      url: `${base_url}/history?api_key=${key}`,
+      url: `${base_url}/gameProgress?api_key=${key}`,
       type: 'GET'
     }),
     $.ajax({
@@ -58,30 +59,30 @@ function start() {
 function saveGame() {
   const progressData = {
     fields: {
-      character: history.character,
-      currentScene: [history.currentScene],
-      gold: history.gold,
-      hitPoints: history.hitPoints,
-      flags: history.flags,
-      turnNumber: history.turnNumber
+      character: gameProgress.character,
+      currentScene: [gameProgress.currentScene],
+      gold: gameProgress.gold,
+      hitPoints: gameProgress.hitPoints,
+      flags: gameProgress.flags,
+      turnNumber: gameProgress.turnNumber
     }
   };
-  let url = `${base_url}/history?api_key=${key}`;
+  let url = `${base_url}/gameProgress?api_key=${key}`;
   let type = 'POST';
 
-  if (history.id) {
-    url = `${base_url}/history/${history.id}?api_key=${key}`;
+  if (gameProgress.id) {
+    url = `${base_url}/gameProgress/${gameProgress.id}?api_key=${key}`;
     type = 'PATCH';
   }
   buttonElement.innerHTML = 'Saving game...';
   $.ajax({ url, type, data: progressData })
     .done(function (data) {
       buttonElement.innerHTML = 'What will you do?';
-      history.id = data.id;
-      history.saveNumber += 1;
+      gameProgress.id = data.id;
+      gameProgress.saveNumber += 1;
       gameData.savedGames[data.id] = data.fields;
       gameData.touchedSinceSave = false;
-      getScene(history.currentScene, true);
+      getScene(gameProgress.currentScene, true);
     })
     .fail(function (err) {
       console.log(err);
@@ -90,13 +91,13 @@ function saveGame() {
 
 // Get the scene and option info. Advance the game turn number.
 function getScene(record_id, resume = false) {
-  history.currentScene = record_id;
+  gameProgress.currentScene = record_id;
   if (!resume) {
-    history.turnNumber += 1;
+    gameProgress.turnNumber += 1;
     gameData.touchedSinceSave = true;
   }
   if (optionFlags[record_id]) {
-    history.flags.push(optionFlags[record_id]);
+    gameProgress.flags.push(optionFlags[record_id]);
   }
   clearOptionFlags();
 
@@ -117,7 +118,7 @@ function getScene(record_id, resume = false) {
           default:
             console.log('special:', data.fields.special);
         }
-      }	  
+      }
       // Don't bother if the scene doesn't have any choices.
       else if (data.fields.choices) {
         // Collect AirTable queries for every choice into an array.
@@ -200,12 +201,12 @@ function getNewOrSavedStory(value) {
 
 // Build current game progress data from saved game data.
 function resumeGame(record_id, progressData) {
-  history.id = record_id;
-  history.character = progressData.character;
-  history.gold = parseInt(progressData.gold);
-  history.hitPoints = parseInt(progressData.hitPoints);
-  history.flags = [].concat(progressData.flags);
-  history.turnNumber = parseInt(progressData.turnNumber);
+  gameProgress.id = record_id;
+  gameProgress.character = progressData.character;
+  gameProgress.gold = parseInt(progressData.gold);
+  gameProgress.hitPoints = parseInt(progressData.hitPoints);
+  gameProgress.flags = [].concat(progressData.flags);
+  gameProgress.turnNumber = parseInt(progressData.turnNumber);
   getScene(progressData.currentScene, true);
 }
 
@@ -216,7 +217,7 @@ function getCharacterSelection(value) {
   })
   if (character) {
     gameData.currentGameState = config.PLAY_GAME;
-    history.character = `${character.fields.name} the ${character.fields.charClass}`;
+    gameProgress.character = `${character.fields.name} the ${character.fields.charClass}`;
     getScene(value);
   } else {
     console.log('ERROR: Character could not be found.');
